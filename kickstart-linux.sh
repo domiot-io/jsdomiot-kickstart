@@ -124,79 +124,139 @@ check_system_requirements() {
     print_status "All system requirements are met!"
 }
 
-install_missing_dependencies() {
-    print_header "Installing Missing System Dependencies"
-    
+install_for_debian() {
+    print_status "Checking Debian dependencies..."
     local need_install=false
     local missing_packages=()
     
-    case $OS in
-        "debian")
-            if ! dpkg -l | grep -q "linux-headers-$(uname -r)"; then
-                missing_packages+=("linux-headers-$(uname -r)")
-                need_install=true
-            fi
-            if ! dpkg -l | grep -q "build-essential"; then
-                missing_packages+=("build-essential")
-                need_install=true
-            fi
-            ;;
-        "redhat")
-            if ! rpm -q kernel-devel &>/dev/null; then
-                missing_packages+=("kernel-devel")
-                need_install=true
-            fi
-            ;;
-        "arch")
-            if ! pacman -Q linux-headers &>/dev/null; then
-                missing_packages+=("linux-headers")
-                need_install=true
-            fi
-            if ! pacman -Q base-devel &>/dev/null; then
-                missing_packages+=("base-devel")
-                need_install=true
-            fi
-            ;;
-        "alpine")
-            if ! apk list --installed | grep -q "linux-headers"; then
-                missing_packages+=("linux-headers")
-                need_install=true
-            fi
-            if ! apk list --installed | grep -q "build-base"; then
-                missing_packages+=("build-base")
-                need_install=true
-            fi
-            ;;
-    esac
+    if ! dpkg -l | grep -q "linux-headers-$(uname -r)"; then
+        missing_packages+=("linux-headers-$(uname -r)")
+        need_install=true
+    fi
+    if ! dpkg -l | grep -q "build-essential"; then
+        missing_packages+=("build-essential")
+        need_install=true
+    fi
     
     if [ "$need_install" = true ]; then
-        print_status "Installing missing packages: ${missing_packages[*]}"
+        print_status "Installing missing Debian packages: ${missing_packages[*]}"
         
-        case $OS in
-            "debian")
-                sudo apt-get update
-                sudo apt-get install -y "${missing_packages[@]}"
-                ;;
-            "redhat")
-                if command -v dnf &> /dev/null; then
-                    sudo dnf install -y "${missing_packages[@]}"
-                else
-                    sudo yum install -y "${missing_packages[@]}"
-                fi
-                ;;
-            "arch")
-                sudo pacman -S --noconfirm "${missing_packages[@]}"
-                ;;
-            "alpine")
-                sudo apk update
-                sudo apk add "${missing_packages[@]}"
-                ;;
-        esac
+        sudo apt-get update || { print_status "Error: Failed to update apt-get."; return 1; }
+        sudo apt-get install -y "${missing_packages[@]}" || { print_status "Error: Failed to install Debian dependencies."; return 1; }
         
-        print_status "Missing dependencies installed successfully"
+        print_status "Debian dependencies installed successfully."
+        return 0
     else
-        print_status "All required system packages are already installed"
+        print_status "All required Debian system packages are already installed."
+        return 0
     fi
+}
+
+install_for_redhat() {
+    print_status "Checking RedHat/CentOS/Fedora dependencies..."
+    local need_install=false
+    local missing_packages=()
+
+    if ! rpm -q kernel-devel &>/dev/null; then
+        missing_packages+=("kernel-devel")
+        need_install=true
+    fi  
+    if [ "$need_install" = true ]; then
+        print_status "Installing missing RedHat/CentOS/Fedora packages: ${missing_packages[*]}"
+        
+        if command -v dnf &> /dev/null; then
+            sudo dnf install -y "${missing_packages[@]}" || { print_status "Error: Failed to install RedHat/CentOS/Fedora dependencies via dnf."; return 1; }
+        else
+            sudo yum install -y "${missing_packages[@]}" || { print_status "Error: Failed to install RedHat/CentOS/Fedora dependencies via yum."; return 1; }
+        fi
+        
+        print_status "RedHat/CentOS/Fedora dependencies installed successfully."
+        return 0
+    else
+        print_status "All required RedHat/CentOS/Fedora system packages are already installed."
+        return 0
+    fi
+}
+
+install_for_arch() {
+    print_status "Checking Arch Linux dependencies..."
+    local need_install=false
+    local missing_packages=()
+
+    if ! pacman -Q linux-headers &>/dev/null; then
+        missing_packages+=("linux-headers")
+        need_install=true
+    fi
+    if ! pacman -Q base-devel &>/dev/null; then
+        missing_packages+=("base-devel")
+        need_install=true
+    fi
+    
+    if [ "$need_install" = true ]; then
+        print_status "Installing missing Arch Linux packages: ${missing_packages[*]}"
+        
+        sudo pacman -S --noconfirm "${missing_packages[@]}" || { print_status "Error: Failed to install Arch Linux dependencies."; return 1; }
+        
+        print_status "Arch Linux dependencies installed successfully."
+        return 0
+    else
+        print_status "All required Arch Linux system packages are already installed."
+        return 0
+    fi
+}
+
+install_for_alpine() {
+    print_status "Checking Alpine Linux dependencies..."
+    local need_install=false
+    local missing_packages=()
+
+    if ! apk list --installed | grep -q "linux-headers"; then
+        missing_packages+=("linux-headers")
+        need_install=true
+    fi
+    if ! apk list --installed | grep -q "build-base"; then
+        missing_packages+=("build-base")
+        need_install=true
+    fi
+    
+    if [ "$need_install" = true ]; then
+        print_status "Installing missing Alpine Linux packages: ${missing_packages[*]}"
+        
+        sudo apk update || { print_status "Error: Failed to update apk."; return 1; }
+        sudo apk add "${missing_packages[@]}" || { print_status "Error: Failed to install Alpine Linux dependencies."; return 1; }
+        
+        print_status "Alpine Linux dependencies installed successfully."
+        return 0
+    else
+        print_status "All required Alpine Linux system packages are already installed."
+        return 0
+    fi
+}
+
+install_missing_dependencies() {
+    print_header "Installing Missing System Dependencies"
+    case $OS in
+        "debian")
+            install_for_debian
+            return $?
+            ;;
+        "redhat")
+            install_for_redhat
+            return $?
+            ;;
+        "arch")
+            install_for_arch
+            return $?
+            ;;
+        "alpine")
+            install_for_alpine
+            return $?
+            ;;
+        *)
+            print_status "Unsupported OS: $OS. Cannot check or install dependencies."
+            return 1
+            ;;
+    esac
 }
 
 detect_os() {
@@ -260,7 +320,7 @@ install_npm_dependencies() {
     if [ -d "jsdomiot" ] && [ -f "jsdomiot/package.json" ]; then
         print_status "Installing dependencies for jsdomiot"
         cd jsdomiot
-        npm install
+        npm install jsdomiot iot-bindings-node
         cd ..
     fi
 }
