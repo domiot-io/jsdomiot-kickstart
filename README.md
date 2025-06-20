@@ -6,9 +6,9 @@ A complete setup script for DOMIoT (Document Object Model for IoT) on Linux syst
 
 To install and set up DOMIoT on your Linux system, simply run:
 
-```
-chmod +x kickstart.sh
-./kickstart.sh
+```sh
+chmod +x kickstart-linux.sh
+./kickstart-linux.sh
 ```
 
 ## What It Does
