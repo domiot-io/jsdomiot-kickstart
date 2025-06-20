@@ -385,22 +385,21 @@ build_drivers() {
                                 cd ..
                                 continue
                             }
-                            
-                            if grep -q "load:" Makefile && ! grep -E "(rm|format|dangerous)" Makefile; then
-                                print_status "Loading module: $driver_name (via make load)"
-                                if sudo make load; then
-                                    print_status "✅ Successfully loaded $driver_name module"
-                                else
-                                    print_warning "Failed to load $driver_name module using 'make load'"
-                                fi
+
+                            print_status "Loading module: $driver_name (via make load)"
+                            if sudo make load; then
+                                print_status "✅ Successfully loaded $driver_name module"
                             else
+                                print_warning "Failed to load $driver_name module using 'make load'"
                                 print_status "Loading module: $driver_name (manual insmod)"
                                 if sudo insmod "$driver_name.ko"; then
+                                    sudo chmod 666 /dev/$driver_name* 2>/dev/null || true
                                     print_status "✅ Successfully loaded $driver_name module"
                                 else
                                     print_warning "Failed to load $driver_name module"
                                 fi
                             fi
+
                         fi
                     else
                         print_warning "Failed to build $driver_name"
