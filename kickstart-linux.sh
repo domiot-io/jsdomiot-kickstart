@@ -362,7 +362,7 @@ build_drivers() {
                     
                     # only allow known DOMIoT simulation drivers
                     case "$driver_name" in
-                        "ihubx24-sim"|"ohubx24-sim"|"iohubx24-sim"|"lcd-sim")
+                        "ihubx24-sim"|"ohubx24-sim"|"iohubx24-sim"|"lcd-sim"|"video-sim")
                             print_status "Building safe simulation driver: $driver_name"
                             ;;
                         *)
@@ -406,7 +406,7 @@ build_drivers() {
         
         # print loaded modules
         print_status "Checking loaded DOMIoT drivers:"
-        lsmod | grep -E "(ihubx24|ohubx24|iohubx24|lcd)-sim" || print_status "No DOMIoT simulation drivers currently loaded"
+        lsmod | grep -E "(ihubx24|ohubx24|iohubx24|lcd|video)-sim" || print_status "No DOMIoT simulation drivers currently loaded"
         
     else
         print_warning "No drivers directory found, skipping driver build"
@@ -444,10 +444,11 @@ finalize_setup() {
         echo -e "${YELLOW}   domiot/jsdomiot/examples/${NC}"
         echo ""
         echo -e "${GREEN} Monitor simulation drivers:${NC}"
-        echo -e "${YELLOW}   cat /tmp/ihubx24-input0              ${NC}# Monitor input"
+        echo -e "${YELLOW}   cat /dev/ihubx24-sim0                ${NC}# Monitor input"
         echo -e "${YELLOW}   watch -n 1 cat /tmp/ohubx24-output0  ${NC}# Monitor output"
-        echo -e "${YELLOW}   watch -n 1 cat /tmp/iohubx24-input0  ${NC}# Monitor input"
+        echo -e "${YELLOW}   cat /dev/iohubx24-sim0               ${NC}# Monitor input"
         echo -e "${YELLOW}   watch -n 1 cat /tmp/lcd-output0      ${NC}# Monitor LCD output"
+        echo -e "${YELLOW}   cat /dev/video-sim0                  ${NC}# Monitor input"
         echo ""
         
         ls
