@@ -386,8 +386,8 @@ build_drivers() {
                                 continue
                             }
 
-                            print_status "Loading module: $driver_name (via make load)";
-                            sudo make load;
+                            print_status "Loading 2 devices of module: $driver_name (via make load NUM_DEVICES=2)";
+                            sudo make load NUM_DEVICES=2;
 
                         fi
                     else
